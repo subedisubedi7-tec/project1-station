@@ -1,1 +1,767 @@
-hello
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>400/220/132 kV AIS Substation | O&M and Relay Protection Portal</title>
+    <style>
+        :root {
+            --primary-bg: #0f172a;
+            --secondary-bg: #1e293b;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-400: #ef4444; /* Red for 400kV */
+            --accent-220: #3b82f6; /* Blue for 220kV */
+            --accent-132: #10b981; /* Green for 132kV */
+            --accent-gold: #f59e0b;
+            --border-color: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--primary-bg);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        /* Header & Nav */
+        header {
+            background-color: #020617;
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-badge {
+            background: linear-gradient(135deg, var(--accent-400), var(--accent-220));
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+        }
+
+        .logo h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        nav {
+            display: flex;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-main);
+            border-color: var(--text-muted);
+        }
+
+        .tab-btn.active {
+            background-color: var(--accent-220);
+            color: white;
+            border-color: var(--accent-220);
+        }
+
+        /* Main Container */
+        main {
+            max-width: 1300px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Section Titles */
+        .section-header {
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.75rem;
+        }
+
+        .section-header h2 {
+            font-size: 1.75rem;
+            color: var(--text-main);
+        }
+
+        .section-header p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        /* Grid & Cards */
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+        }
+
+        .card h3 {
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .bg-400 { background-color: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid var(--accent-400); }
+        .bg-220 { background-color: rgba(59, 130, 246, 0.2); color: #93c5fd; border: 1px solid var(--accent-220); }
+        .bg-132 { background-color: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid var(--accent-132); }
+
+        ul.spec-list {
+            list-style: none;
+            margin-top: 10px;
+        }
+
+        ul.spec-list li {
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        ul.spec-list li span:first-child {
+            color: var(--text-muted);
+        }
+
+        /* Interactive SLD Diagram */
+        .sld-container {
+            background-color: #020617;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            overflow-x: auto;
+            text-align: center;
+        }
+
+        svg text {
+            font-family: 'Segoe UI', sans-serif;
+            user-select: none;
+        }
+
+        .clickable-zone {
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .clickable-zone:hover {
+            opacity: 0.8;
+        }
+
+        /* Tables */
+        .table-wrapper {
+            overflow-x: auto;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            margin-bottom: 2rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: #0f172a;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+        }
+
+        tr:hover {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+
+        .ansi-code {
+            font-family: monospace;
+            background: #0f172a;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--accent-gold);
+            font-weight: bold;
+        }
+
+        /* Filter Controls */
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        select, input[type="text"] {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 8px 12px;
+            border-radius: 6px;
+            outline: none;
+        }
+
+        /* Checklist Styling */
+        .checklist-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .checklist-item input[type="checkbox"] {
+            margin-top: 4px;
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent-132);
+            cursor: pointer;
+        }
+
+        .checklist-item.completed label {
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+
+        /* Fault Simulator Box */
+        .simulator-panel {
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border: 1px solid var(--accent-gold);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .sim-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 1rem 0;
+        }
+
+        .btn-fault {
+            background-color: rgba(239, 68, 68, 0.15);
+            border: 1px solid var(--accent-400);
+            color: #fca5a5;
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-fault:hover {
+            background-color: var(--accent-400);
+            color: white;
+        }
+
+        .sim-output {
+            background-color: #020617;
+            border-left: 4px solid var(--accent-gold);
+            padding: 1rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            min-height: 80px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border-color);
+            margin-top: 3rem;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">
+            <span class="logo-badge">EHV AIS</span>
+            <h1>400 / 220 / 132 kV Substation O&M & Protection Portal</h1>
+        </div>
+        <nav>
+            <button class="tab-btn active" onclick="openTab('overview')">1. Architecture & SLD</button>
+            <button class="tab-btn" onclick="openTab('protection')">2. Relay Protection Scheme</button>
+            <button class="tab-btn" onclick="openTab('maintenance')">3. Maintenance Schedule</button>
+            <button class="tab-btn" onclick="openTab('operations')">4. Switching & SOPs</button>
+        </nav>
+    </header>
+
+    <main>
+        <!-- TAB 1: ARCHITECTURE & SLD -->
+        <section id="overview" class="tab-content active">
+            <div class="section-header">
+                <h2>Substation Switchyard Architecture & Single Line Diagram</h2>
+                <p>Air Insulated Substation (AIS) topology featuring One-and-a-Half Breaker (400 kV) and Double Main + Transfer Bus (220/132 kV) schemes.</p>
+            </div>
+
+            <div class="grid-3">
+                <div class="card">
+                    <h3>400 kV Switchyard <span class="badge bg-400">EHV Grid</span></h3>
+                    <ul class="spec-list">
+                        <li><span>Busbar Scheme:</span> <strong>1½ Breaker (One-and-a-Half)</strong></li>
+                        <li><span>Rated Short-Time Current:</span> <strong>50 kA / 63 kA (1 sec)</strong></li>
+                        <li><span>BIL (Impulse Withstand):</span> <strong>1425 kVp</strong></li>
+                        <li><span>Line Reactor:</span> <strong>50 - 80 MVAR Switchable/Fixed</strong></li>
+                        <li><span>Auto-Reclose Mode:</span> <strong>1-Phase & 3-Phase (1.0s dead time)</strong></li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>220 kV Switchyard <span class="badge bg-220">HV Grid</span></h3>
+                    <ul class="spec-list">
+                        <li><span>Busbar Scheme:</span> <strong>Double Main + Transfer Bus</strong></li>
+                        <li><span>Rated Short-Time Current:</span> <strong>40 kA / 50 kA (1 sec)</strong></li>
+                        <li><span>BIL (Impulse Withstand):</span> <strong>1050 kVp</strong></li>
+                        <li><span>Interconnecting ICT:</span> <strong>315/500 MVA, 400/220/33 kV (YNyn0d11)</strong></li>
+                        <li><span>Auto-Reclose Mode:</span> <strong>1-Phase & 3-Phase</strong></li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>132 kV Switchyard <span class="badge bg-132">Sub-Transmission</span></h3>
+                    <ul class="spec-list">
+                        <li><span>Busbar Scheme:</span> <strong>Double Bus / Main & Transfer</strong></li>
+                        <li><span>Rated Short-Time Current:</span> <strong>31.5 kA / 40 kA (1 sec)</strong></li>
+                        <li><span>BIL (Impulse Withstand):</span> <strong>650 kVp</strong></li>
+                        <li><span>Interconnecting ICT:</span> <strong>100/160 MVA, 220/132/33 kV (YNyn0d11)</strong></li>
+                        <li><span>Auto-Reclose Mode:</span> <strong>3-Phase Only</strong></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Interactive SVG Single Line Diagram -->
+            <div class="sld-container">
+                <h3 style="margin-bottom: 1rem; color: var(--text-muted);">Interactive Single Line Overview (Click Equipment to Inspect Protection Zones)</h3>
+                <svg width="950" height="360" viewBox="0 0 950 360">
+                    <!-- 400kV Buses -->
+                    <line x1="50" y1="40" x2="900" y2="40" stroke="#ef4444" stroke-width="5"/>
+                    <text x="55" y="28" fill="#fca5a5" font-size="13" font-weight="bold">400 kV MAIN BUS - 1</text>
+
+                    <line x1="50" y1="220" x2="900" y2="220" stroke="#ef4444" stroke-width="5"/>
+                    <text x="55" y="242" fill="#fca5a5" font-size="13" font-weight="bold">400 kV MAIN BUS - 2</text>
+
+                    <!-- Diameter 1: 1.5 Breaker Scheme -->
+                    <line x1="250" y1="40" x2="250" y2="220" stroke="#94a3b8" stroke-width="2"/>
+                    <!-- CB 1 (Main 1) -->
+                    <g class="clickable-zone" onclick="inspectZone('CB-401 (Main-1 Breaker)', 'Equipped with Dual Trip Coils, LBB (50BF), Pole Discrepancy Relay (62PD), and Synchro-check (25).')">
+                        <rect x="238" y="65" width="24" height="24" fill="#ef4444" stroke="#fff" stroke-width="1.5"/>
+                        <text x="270" y="82" fill="#f8fafc" font-size="11">CB-401</text>
+                    </g>
+                    <!-- Line Takeoff -->
+                    <line x1="250" y1="100" x2="120" y2="100" stroke="#ef4444" stroke-width="2.5"/>
+                    <text x="60" y="95" fill="#fca5a5" font-size="11">400kV Line-1</text>
+                    <!-- Tie CB -->
+                    <g class="clickable-zone" onclick="inspectZone('CB-402 (Tie Breaker)', 'Shared between Line-1 and ICT-1. Protected by Bus-1, Bus-2, Line-1, and ICT-1 LBB zones.')">
+                        <rect x="238" y="118" width="24" height="24" fill="#ef4444" stroke="#fff" stroke-width="1.5"/>
+                        <text x="270" y="135" fill="#f8fafc" font-size="11">CB-402 (Tie)</text>
+                    </g>
+                    <!-- ICT-1 Takeoff -->
+                    <line x1="250" y1="160" x2="450" y2="160" stroke="#ef4444" stroke-width="2.5"/>
+                    <!-- CB 3 (Main 2) -->
+                    <g class="clickable-zone" onclick="inspectZone('CB-403 (Main-2 Breaker)', 'Isolates ICT-1 from 400 kV Main Bus-2. Interlocked with Bus-2 isolator and Earth Switches.')">
+                        <rect x="238" y="175" width="24" height="24" fill="#ef4444" stroke="#fff" stroke-width="1.5"/>
+                        <text x="270" y="192" fill="#f8fafc" font-size="11">CB-403</text>
+                    </g>
+
+                    <!-- 400/220 kV ICT-1 -->
+                    <g class="clickable-zone" onclick="inspectZone('ICT-1 (315 MVA, 400/220/33 kV)', 'Main-1 & Main-2 Differential (87T), REF (64R), Overfluxing (24), Buchholz (63), WTI/OTI (49), PRD.')">
+                        <circle cx="470" cy="160" r="20" fill="none" stroke="#ef4444" stroke-width="2.5"/>
+                        <circle cx="498" cy="160" r="20" fill="none" stroke="#3b82f6" stroke-width="2.5"/>
+                        <text x="450" y="130" fill="#f8fafc" font-size="12" font-weight="bold">ICT-1 (400/220kV)</text>
+                    </g>
+
+                    <!-- 220kV Bus -->
+                    <line x1="518" y1="160" x2="620" y2="160" stroke="#3b82f6" stroke-width="2.5"/>
+                    <rect x="550" y="148" width="24" height="24" fill="#3b82f6" stroke="#fff" stroke-width="1.5"/>
+                    <line x1="620" y1="60" x2="620" y2="260" stroke="#3b82f6" stroke-width="5"/>
+                    <text x="580" y="48" fill="#93c5fd" font-size="13" font-weight="bold">220 kV BUS</text>
+
+                    <!-- 220/132 kV ICT-2 -->
+                    <line x1="620" y1="160" x2="710" y2="160" stroke="#3b82f6" stroke-width="2.5"/>
+                    <g class="clickable-zone" onclick="inspectZone('ICT-2 (160 MVA, 220/132/33 kV)', 'Biased Differential (87T), HV/IV REF (64R), Backup Directional Overcurrent (67/67N), OLTC Surge Relay.')">
+                        <circle cx="730" cy="160" r="18" fill="none" stroke="#3b82f6" stroke-width="2.5"/>
+                        <circle cx="755" cy="160" r="18" fill="none" stroke="#10b981" stroke-width="2.5"/>
+                        <text x="705" y="130" fill="#f8fafc" font-size="12" font-weight="bold">ICT-2 (220/132kV)</text>
+                    </g>
+
+                    <!-- 132kV Bus -->
+                    <line x1="773" y1="160" x2="860" y2="160" stroke="#10b981" stroke-width="2.5"/>
+                    <rect x="805" y="148" width="24" height="24" fill="#10b981" stroke="#fff" stroke-width="1.5"/>
+                    <line x1="860" y1="80" x2="860" y2="240" stroke="#10b981" stroke-width="5"/>
+                    <text x="825" y="68" fill="#6ee7b7" font-size="13" font-weight="bold">132 kV BUS</text>
+                </svg>
+                <div id="zone-info" style="background: #1e293b; padding: 12px; border-radius: 6px; border: 1px solid #334155; color: #f8fafc; font-size: 0.95rem;">
+                    <em>Click on any Circuit Breaker or Interconnecting Transformer (ICT) in the diagram above to inspect its protection configuration.</em>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: RELAY PROTECTION SCHEME -->
+        <section id="protection" class="tab-content">
+            <div class="section-header">
+                <h2>Comprehensive Relay Protection Matrix (IEC / ANSI Standards)</h2>
+                <p>Redundant Main-1 & Main-2 numerical protection philosophy for 400 kV, 220 kV, and 132 kV bays.</p>
+            </div>
+
+            <div class="controls">
+                <select id="bayFilter" onchange="filterRelays()">
+                    <option value="ALL">All Voltage Levels & Bays</option>
+                    <option value="400kV Line">400 kV Transmission Line</option>
+                    <option value="220kV Line">220 kV Transmission Line</option>
+                    <option value="132kV Line">132 kV Transmission Line</option>
+                    <option value="ICT">Auto-Transformers (ICT)</option>
+                    <option value="Busbar">Busbar & Breaker Failure</option>
+                </select>
+                <input type="text" id="relaySearch" onkeyup="filterRelays()" placeholder="Search ANSI code (e.g., 21, 87T, 50BF)...">
+            </div>
+
+            <div class="table-wrapper">
+                <table id="relayTable">
+                    <thead>
+                        <tr>
+                            <th>Protected Bay / Asset</th>
+                            <th>Protection Tier</th>
+                            <th>ANSI Code</th>
+                            <th>Protection Function</th>
+                            <th>Tripping / Action Logic</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr data-bay="400kV Line">
+                            <td><strong>400 kV Transmission Line</strong></td>
+                            <td>Main-1 (IED-A)</td>
+                            <td><span class="ansi-code">87L / 21</span></td>
+                            <td>Line Current Differential (Optical Fiber) + Distance Backup</td>
+                            <td>High-speed 1-pole/3-pole trip via Trip Coil-1; initiates AR (79)</td>
+                        </tr>
+                        <tr data-bay="400kV Line">
+                            <td><strong>400 kV Transmission Line</strong></td>
+                            <td>Main-2 (IED-B)</td>
+                            <td><span class="ansi-code">21 / 21N / 85</span></td>
+                            <td>Sub-cycle Distance Protection with PUTT/POTT Carrier + DEF (67N)</td>
+                            <td>High-speed 1-pole/3-pole trip via Trip Coil-2; blocks AR on Zone-2/3</td>
+                        </tr>
+                        <tr data-bay="400kV Line">
+                            <td><strong>400 kV Line Reactor</strong></td>
+                            <td>Dedicated</td>
+                            <td><span class="ansi-code">87R / 64R / 63</span></td>
+                            <td>Reactor Differential, Restricted Earth Fault, Buchholz & WTI/OTI</td>
+                            <td>3-pole trip of Line CBs + Direct Transfer Trip (DTT) to remote end</td>
+                        </tr>
+                        <tr data-bay="220kV Line">
+                            <td><strong>220 kV Transmission Line</strong></td>
+                            <td>Main-1 & Main-2</td>
+                            <td><span class="ansi-code">21 / 21N / 67N</span></td>
+                            <td>Dual Quadrilateral/Mho Distance Relays + Directional Earth Fault</td>
+                            <td>Zone-1 instantaneous 1-ph/3-ph trip; Zone-2 (350ms), Zone-3 (800ms)</td>
+                        </tr>
+                        <tr data-bay="132kV Line">
+                            <td><strong>132 kV Transmission Line</strong></td>
+                            <td>Main + Backup</td>
+                            <td><span class="ansi-code">21 + 67/67N</span></td>
+                            <td>Numerical Distance Relay + Directional Overcurrent/Earth Fault</td>
+                            <td>3-phase trip only; 3-phase Auto-Reclose shot (dead time ~1.0s)</td>
+                        </tr>
+                        <tr data-bay="ICT">
+                            <td><strong>400/220 kV & 220/132 kV ICT</strong></td>
+                            <td>Main-1 & Main-2</td>
+                            <td><span class="ansi-code">87T / 64R</span></td>
+                            <td>Biased Percentage Differential + High/Low Impedance REF</td>
+                            <td>Trips HV, IV, and LV breakers simultaneously via Master Trip (86); Blocks AR</td>
+                        </tr>
+                        <tr data-bay="ICT">
+                            <td><strong>400/220 kV & 220/132 kV ICT</strong></td>
+                            <td>Backup & Mechanical</td>
+                            <td><span class="ansi-code">51/51N / 24 / 63</span></td>
+                            <td>IDMT Overcurrent, Overfluxing (V/Hz), Buchholz, PRD, OTI/WTI</td>
+                            <td>Alarm on Stage-1 (Gas/Temp); Master Trip (86) on Stage-2 / Surge</td>
+                        </tr>
+                        <tr data-bay="Busbar">
+                            <td><strong>400 / 220 / 132 kV Busbars</strong></td>
+                            <td>Distributed/Central</td>
+                            <td><span class="ansi-code">87B / 50BF</span></td>
+                            <td>Low-Impedance Busbar Differential + Local Breaker Backup (LBB)</td>
+                            <td>Trips all CBs connected to faulted bus zone within &lt;20ms; blocks AR</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Interactive Fault Simulation -->
+            <div class="simulator-panel">
+                <h3>Interactive Protection Tripping & Coordination Simulator</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Select a fault scenario to observe relay pick-up sequence, breaker operations, and Auto-Reclose behavior:</p>
+                <div class="sim-buttons">
+                    <button class="btn-fault" onclick="simulateFault('400_slg')">400 kV Line Transient SLG Fault (Zone-1)</button>
+                    <button class="btn-fault" onclick="simulateFault('ict_diff')">400/220 kV ICT Internal Winding Fault</button>
+                    <button class="btn-fault" onclick="simulateFault('lbb_fail')">220 kV Line Fault + Breaker Stuck (50BF)</button>
+                    <button class="btn-fault" onclick="simulateFault('bus_fault')">132 kV Main Bus-1 Differential Fault</button>
+                </div>
+                <div class="sim-output" id="simOutput">
+                    [SYSTEM READY] Select a fault scenario above to trace relay trip sequence...
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: MAINTENANCE SCHEDULE -->
+        <section id="maintenance" class="tab-content">
+            <div class="section-header">
+                <h2>Preventive & Condition-Based Maintenance (CBM) Schedule</h2>
+                <p>Routine testing protocols for EHV/HV switchgear, transformers, and numerical protection IEDs.</p>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Equipment</th>
+                            <th>Interval</th>
+                            <th>Key Diagnostic & Maintenance Tests</th>
+                            <th>Acceptance Criteria / Standard</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>SF6 Circuit Breakers</strong><br><span style="color:var(--text-muted); font-size:0.8rem;">(400 / 220 / 132 kV)</span></td>
+                            <td>Annual / 3-Yearly</td>
+                            <td>Dynamic Contact Resistance (DCRM), Open/Close Timing, SF6 Dew Point & Purity, Pole Discrepancy Check</td>
+                            <td>Contact resistance &lt; 50 µΩ; Dew point &lt; -35°C; Pole spread &lt; 2 ms</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Power Auto-Transformers (ICT)</strong></td>
+                            <td>6-Monthly / Annual</td>
+                            <td>Dissolved Gas Analysis (DGA), Tan-Delta & Capacitance (Bushings/Winding), SFRA, BDV, Moisture in Oil</td>
+                            <td>BDV &gt; 60 kV (400kV); Water content &lt; 10 ppm; Tan-Delta &lt; 0.005</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Current & Capacitive Voltage Transformers (CT/CVT)</strong></td>
+                            <td>Annual / 2-Yearly</td>
+                            <td>Tan-Delta & Capacitance Measurement, Ratio & Polarity Check, Secondary Burden & Insulation Resistance</td>
+                            <td>Capacitance drift &lt; ±2% from commissioning benchmark</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Surge Arresters (LA)</strong></td>
+                            <td>6-Monthly</td>
+                            <td>Third Harmonic Resistive Leakage Current (LCM) & Surge Counter Reading</td>
+                            <td>Resistive current &lt; 50 µA (or within manufacturer zone)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Numerical Relays & SAS</strong></td>
+                            <td>Annual</td>
+                            <td>Secondary Injection Testing (Omicron), Trip Matrix Verification, DC Battery Discharge & Earth Fault Check</td>
+                            <td>Operating time within ±5% of setting; Zero DC ground leakage</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Switchyard Busbars & Clamps</strong></td>
+                            <td>Quarterly</td>
+                            <td>Infrared Thermography (Thermal Imaging) under peak load conditions</td>
+                            <td>Hotspot ΔT &lt; 10°C above ambient/adjacent phase</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- TAB 4: SWITCHING & SOPs -->
+        <section id="operations" class="tab-content">
+            <div class="section-header">
+                <h2>Substation Operation & Switching Standard Operating Procedures (SOP)</h2>
+                <p>Interactive safety checklist for isolating an EHV bay for maintenance (Permit-to-Work protocol).</p>
+            </div>
+
+            <div class="card">
+                <h3>Bay Isolation & Earthing Checklist (400/220/132 kV)</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">Verify and check off each step in strict sequential order before issuing Permit-to-Work (PTW):</p>
+
+                <div id="checklist-container">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="step1" onchange="toggleCheck(this)">
+                        <label for="step1"><strong>Step 1: Load Transfer & Dispatch Clearance</strong> — Obtain formal switching code from SLDC/NLDC. Verify power flow redistribution on parallel feeders/ICTs.</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="step2" onchange="toggleCheck(this)">
+                        <label for="step2"><strong>Step 2: Auto-Reclose & Carrier Blocking</strong> — Switch Auto-Reclose (79) selector to OFF/Non-Auto and block DTT/Carrier send/receive at both ends.</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="step3" onchange="toggleCheck(this)">
+                        <label for="step3"><strong>Step 3: Open Circuit Breaker(s)</strong> — Open the respective Circuit Breaker(s) via SCADA/Local control panel. Confirm all 3 phases open via ammeter (0 A) and mechanical pole indicators.</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="step4" onchange="toggleCheck(this)">
+                        <label for="step4"><strong>Step 4: Open Line & Bus Isolators</strong> — Open Line Isolator first, followed by Main Bus-1 / Bus-2 Isolators. Visually verify physical air-gap opening in the switchyard.</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="step5" onchange="toggleCheck(this)">
+                        <label for="step5"><strong>Step 5: Verify Dead Line & Close Earth Switches</strong> — Confirm zero voltage on CVT/Bus PT. Close Bay Earth Switches (and Line Earth Switch after remote end confirmation). Lock isolator control cabinets.</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="step6" onchange="toggleCheck(this)">
+                        <label for="step6"><strong>Step 6: LOTO & Issue Permit-to-Work (PTW)</strong> — Apply Lock-Out Tag-Out (LOTO) "MEN AT WORK" tags on SCADA and local control cubicles. Demarcate safe working zone with red/white safety tape.</label>
+                    </div>
+                </div>
+
+                <div style="margin-top: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+                    <span id="progress-text" style="color: var(--accent-gold); font-weight: bold;">0 of 6 Steps Completed</span>
+                    <button class="tab-btn" onclick="resetChecklist()">Reset Checklist</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        400/220/132 kV AIS Substation Engineering Portal • Compliant with IEC 61850, IEEE C37.2 & CEA Grid Standards
+    </footer>
+
+    <script>
+        // Tab Switching Logic
+        function openTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // SLD Interactive Zone Inspector
+        function inspectZone(title, desc) {
+            const box = document.getElementById('zone-info');
+            box.innerHTML = `<strong style="color: #38bdf8;">${title}:</strong> ${desc}`;
+        }
+
+        // Relay Table Filter
+        function filterRelays() {
+            const bayFilter = document.getElementById('bayFilter').value.toUpperCase();
+            const search = document.getElementById('relaySearch').value.toUpperCase();
+            const rows = document.querySelectorAll('#relayTable tbody tr');
+
+            rows.forEach(row => {
+                const bay = row.getAttribute('data-bay').toUpperCase();
+                const text = row.innerText.toUpperCase();
+                const matchesBay = (bayFilter === 'ALL') || (bay === bayFilter);
+                const matchesSearch = text.includes(search);
+                row.style.display = (matchesBay && matchesSearch) ? '' : 'none';
+            });
+        }
+
+        // Fault Simulator Logic
+        function simulateFault(type) {
+            const out = document.getElementById('simOutput');
+            const scenarios = {
+                '400_slg': `> [0 ms] R-Phase to Ground fault occurs at 35% of 400 kV Line-1.
+> [12 ms] Main-1 (87L) and Main-2 (21 Zone-1) pick up simultaneously.
+> [18 ms] Trip command issued to R-Phase pole of CB-401 (Main-1) and CB-402 (Tie).
+> [45 ms] R-Phase poles open; Y and B phases remain closed (Single-Pole Tripping).
+> [1045 ms] Dead time (1.0s) expires -> Auto-Reclose (79) closes R-Phase pole of CB-401 (Leader), followed by CB-402 (Follower) via Synchro-check (25). System restored!`,
+                'ict_diff': `> [0 ms] Turn-to-turn internal fault occurs in 400/220 kV ICT-1 HV winding.
+> [14 ms] Main-1 & Main-2 Biased Differential (87T) + HV REF (64R) operate.
+> [16 ms] High-Speed Master Trip Relay (86) energizes dual trip coils of 400 kV CBs (CB-402, CB-403) and 220 kV ICT Breaker.
+> [50 ms] ICT-1 completely isolated from grid. Auto-Reclose (79) is permanently BLOCKED.`,
+                'lbb_fail': `> [0 ms] 3-Phase fault on 220 kV Feeder-2. Distance Relay (21) trips Feeder-2 CB.
+> [15 ms] Feeder-2 CB mechanism fails to open (Stuck Breaker); 50BF timer starts.
+> [165 ms] LBB timer (150 ms) expires with fault current still detected.
+> [180 ms] 50BF trip routed via Busbar Protection (87B) to trip Bus Coupler and all CBs connected to 220 kV Main Bus-1.`,
+                'bus_fault': `> [0 ms] Busbar insulator flashover on 132 kV Main Bus-1.
+> [10 ms] Low-Impedance Busbar Differential Relay (87B) detects unbalance > threshold.
+> [15 ms] 87B trips all feeder breakers, ICT-2 LV breaker, and Bus Coupler connected to Main Bus-1.
+> [55 ms] Main Bus-1 cleared; healthy feeders remain in service on Main Bus-2.`
+            };
+            out.innerText = scenarios[type];
+        }
+
+        // SOP Checklist Logic
+        function toggleCheck(checkbox) {
+            const item = checkbox.parentElement;
+            if (checkbox.checked) {
+                item.classList.add('completed');
+            } else {
+                item.classList.remove('completed');
+            }
+            updateProgress();
+        }
+
+        function updateProgress() {
+            const total = document.querySelectorAll('#checklist-container input[type="checkbox"]').length;
+            const checked = document.querySelectorAll('#checklist-container input[type="checkbox"]:checked').length;
+            document.getElementById('progress-text').innerText = `${checked} of ${total} Steps Completed`;
+        }
+
+        function resetChecklist() {
+            document.querySelectorAll('#checklist-container input[type="checkbox"]').forEach(cb => {
+                cb.checked = false;
+                cb.parentElement.classList.remove('completed');
+            });
+            updateProgress();
+        }
+    </script>
+</body>
+</html>
